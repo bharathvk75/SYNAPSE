@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "synapse"
+version = "1.0.0"
+description = "SYNAPSE - Multi-Agent Automated Code Reviewer & PR Bot"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.111.0"
+uvicorn = {extras = ["standard"], version = "^0.30.0"}
+pydantic = "^2.7.0"
+pydantic-settings = "^2.3.0"
+langgraph = "^0.2.0"
+langchain = "^0.2.0"
+langchain-core = "^0.2.0"
+langchain-community = "^0.2.0"
+litellm = "^1.42.0"
+PyGithub = "^2.3.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.30"}
+aiosqlite = "^0.20.0"
+alembic = "^1.13.0"
+python-multipart = "^0.0.9"
+python-dotenv = "^1.0.1"
+httpx = "^0.27.0"
+websockets = "^12.0"
+aiofiles = "^23.2.1"
+rich = "^13.7.0"
+structlog = "^24.2.0"
+tenacity = "^8.3.0"
+pygments = "^2.18.0"
+tiktoken = "^0.7.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+cachetools = "^5.3.3"
+anthropic = "^0.26.0"
+openai = "^1.30.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+pytest-asyncio = "^0.23.0"
+black = "^24.4.0"
+ruff = "^0.4.0"
+mypy = "^1.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

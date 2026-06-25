@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  # ── SYNAPSE Backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: synapse-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - DATABASE_URL=sqlite+aiosqlite:///./synapse.db
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_MODEL=${LLM_MODEL:-hermes3}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - LMSTUDIO_BASE_URL=${LMSTUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}
+      - HERMES_PROVIDER=${HERMES_PROVIDER:-ollama}
+      - HERMES_MODEL=${HERMES_MODEL:-hermes3}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:3000
+      - REQUIRE_APPROVAL_FOR_PR=true
+    volumes:
+      - synapse-db:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - synapse-net
+
+  # ── SYNAPSE Frontend ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: synapse-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - synapse-net
+
+  # ── Optional: PostgreSQL (swap SQLite for prod) ───────────────────────────────
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: synapse-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: synapse
+  #     POSTGRES_USER: synapse
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-synapse_dev_password}
+  #   volumes:
+  #     - synapse-pg-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - synapse-net
+
+volumes:
+  synapse-db:
+    driver: local
+  # synapse-pg-data:
+
+networks:
+  synapse-net:
+    driver: bridge
