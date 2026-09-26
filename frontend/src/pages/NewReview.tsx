@@ -25,6 +25,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   cohere: '🌊 Cohere',
   azure: '☁️ Azure OpenAI',
   deepseek: '🐳 DeepSeek Coder',
+  nvidia: '🟢 Nvidia NIM',
+  openai_compatible: '☁️ OpenAI Compatible',
+  mock: '🧪 Mock Mode (No API Key Required)',
 }
 
 export default function NewReviewPage() {
@@ -98,7 +101,7 @@ export default function NewReviewPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-               style={{ background: 'linear-gradient(135deg, #4f6ef7, #818cf8)' }}>
+               style={{ background: 'linear-gradient(135deg, #f97316, #f59e0b)' }}>
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>

@@ -39,6 +39,12 @@ async def _node_security_scanner(state: SynapseState) -> dict:
     return await agent.run(state)
 
 
+async def _node_impact_analyzer(state: SynapseState) -> dict:
+    from app.agents.impact_analyzer import ImpactAnalyzerAgent
+    agent = ImpactAnalyzerAgent()
+    return await agent.run(state)
+
+
 async def _node_test_generator(state: SynapseState) -> dict:
     from app.agents.test_generator import TestGeneratorAgent
     agent = TestGeneratorAgent()
@@ -84,7 +90,7 @@ def _route_after_init(state: SynapseState) -> Literal["code_analyzer", END]:
     return "code_analyzer"
 
 
-def _route_after_security(state: SynapseState) -> Literal["test_generator", "fix_suggester"]:
+def _route_after_impact(state: SynapseState) -> Literal["test_generator", "fix_suggester"]:
     if state.request.enable_tests:
         return "test_generator"
     return "fix_suggester"
@@ -132,6 +138,7 @@ class SynapseWorkflow:
         builder.add_node("hermes_init", _node_hermes_init)
         builder.add_node("code_analyzer", _node_code_analyzer)
         builder.add_node("security_scanner", _node_security_scanner)
+        builder.add_node("impact_analyzer", _node_impact_analyzer)
         builder.add_node("test_generator", _node_test_generator)
         builder.add_node("fix_suggester", _node_fix_suggester)
         builder.add_node("hermes_synthesize", _node_hermes_synthesize)
@@ -144,7 +151,8 @@ class SynapseWorkflow:
         # Conditional edges
         builder.add_conditional_edges("hermes_init", _route_after_init)
         builder.add_edge("code_analyzer", "security_scanner")
-        builder.add_conditional_edges("security_scanner", _route_after_security)
+        builder.add_edge("security_scanner", "impact_analyzer")
+        builder.add_conditional_edges("impact_analyzer", _route_after_impact)
         builder.add_conditional_edges("test_generator", _route_after_tests)
         builder.add_edge("fix_suggester", "hermes_synthesize")
         builder.add_conditional_edges("hermes_synthesize", _route_after_synthesize)

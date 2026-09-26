@@ -91,3 +91,30 @@ async def chat_with_hermes(session_id: str, body: HermesMessage, request: Reques
     state.hermes_conversation.append({"role": "assistant", "content": response})
 
     return {"session_id": session_id, "response": response, "role": "hermes"}
+
+
+@router.get("/{session_id}/sarif")
+async def export_sarif(session_id: str, request: Request):
+    """Export review results in OASIS SARIF v2.1.0 format."""
+    svc = _service(request)
+    review = await svc.get_review(session_id)
+    if not review:
+        raise HTTPException(status_code=404, detail=f"Review {session_id} not found")
+
+    from app.services.sarif_service import sarif_service
+
+    return sarif_service.generate_sarif(review)
+
+
+@router.get("/{session_id}/markdown")
+async def export_markdown(session_id: str, request: Request):
+    """Export review summary as GitHub PR comment formatted Markdown."""
+    svc = _service(request)
+    review = await svc.get_review(session_id)
+    if not review:
+        raise HTTPException(status_code=404, detail=f"Review {session_id} not found")
+
+    from app.services.sarif_service import sarif_service
+
+    md_content = sarif_service.generate_pr_markdown(review)
+    return {"session_id": session_id, "markdown": md_content}

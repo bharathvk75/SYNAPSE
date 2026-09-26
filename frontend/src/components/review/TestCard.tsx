@@ -32,7 +32,7 @@ export default function TestCard({ suggestion }: { suggestion: TestSuggestion })
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const priorityClass = PRIORITY_COLORS[suggestion.priority] ?? PRIORITY_COLORS.medium
+  const priorityClass = PRIORITY_COLORS[suggestion.priority as keyof typeof PRIORITY_COLORS] ?? PRIORITY_COLORS.medium
 
   return (
     <motion.div layout className="glass-card overflow-hidden border-green-500/10">

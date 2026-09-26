@@ -19,14 +19,14 @@ export default function App() {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#161830',
+            background: '#0f0f16',
             color: '#fff',
-            border: '1px solid #1e2240',
-            borderRadius: '0.75rem',
+            border: '1px solid #1c1c28',
+            borderRadius: '2px',
             fontSize: '0.875rem',
           },
-          success: { iconTheme: { primary: '#4ade80', secondary: '#161830' } },
-          error:   { iconTheme: { primary: '#f87171', secondary: '#161830' } },
+          success: { iconTheme: { primary: '#f97316', secondary: '#0f0f16' } },
+          error:   { iconTheme: { primary: '#ef4444', secondary: '#0f0f16' } },
         }}
       />
       <AnimatePresence mode="wait">

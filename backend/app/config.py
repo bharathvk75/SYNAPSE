@@ -3,7 +3,7 @@ SYNAPSE — Application Configuration
 Manages all runtime settings via environment variables + .env file.
 """
 from functools import lru_cache
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     )
 
     # ── Server ─────────────────────────────────────────────────────────────────
+    app_name: str = "SYNAPSE"
+    version: str = "2.12"
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = False
@@ -25,7 +27,7 @@ class Settings(BaseSettings):
     log_level: str = "info"
 
     # ── CORS ───────────────────────────────────────────────────────────────────
-    cors_origins: List[str] = [
+    cors_origins: Any = [
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
@@ -82,6 +84,14 @@ class Settings(BaseSettings):
     deepseek_model: str = "deepseek-coder"
     deepseek_base_url: str = "https://api.deepseek.com"
 
+    nvidia_api_key: Optional[str] = None
+    nvidia_model: str = "meta/llama-3.1-405b-instruct"
+    nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
+
+    openai_compatible_api_key: Optional[str] = None
+    openai_compatible_model: str = "custom-model"
+    openai_compatible_base_url: Optional[str] = None
+
     # ── Hermes — Master Orchestrator (can use a different model than reviewers) ─
     hermes_provider: str = "ollama"
     hermes_model: str = "hermes3"
@@ -98,6 +108,15 @@ class Settings(BaseSettings):
     enable_security_scan: bool = True
     enable_test_generation: bool = True
     enable_fix_suggestions: bool = True
+
+    # ── Notifications ──────────────────────────────────────────────────────────
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    whatsapp_phone_number_id: Optional[str] = None
+    whatsapp_access_token: Optional[str] = None
+    whatsapp_recipient_number: Optional[str] = None
+    enable_telegram_notifications: bool = False
+    enable_whatsapp_notifications: bool = False
 
     # ── Webhooks ───────────────────────────────────────────────────────────────
     webhook_enabled: bool = True
@@ -177,6 +196,25 @@ class Settings(BaseSettings):
                 "temperature": self.llm_temperature,
                 "max_tokens": self.llm_max_tokens,
             },
+            "nvidia": {
+                "model": f"openai/{self.nvidia_model}" if not self.nvidia_model.startswith("openai/") else self.nvidia_model,
+                "api_key": self.nvidia_api_key,
+                "api_base": self.nvidia_base_url,
+                "temperature": self.llm_temperature,
+                "max_tokens": self.llm_max_tokens,
+            },
+            "openai_compatible": {
+                "model": f"openai/{self.openai_compatible_model}" if not self.openai_compatible_model.startswith("openai/") else self.openai_compatible_model,
+                "api_key": self.openai_compatible_api_key,
+                "api_base": self.openai_compatible_base_url,
+                "temperature": self.llm_temperature,
+                "max_tokens": self.llm_max_tokens,
+            },
+            "mock": {
+                "model": "mock",
+                "temperature": 0.0,
+                "max_tokens": 100,
+            },
         }
         return configs.get(p, configs["ollama"])
 
@@ -185,7 +223,7 @@ class Settings(BaseSettings):
         cfg = self.get_llm_config(self.hermes_provider)
         if self.hermes_provider == "ollama":
             cfg["model"] = f"ollama/{self.hermes_model}"
-        elif self.hermes_provider == "lmstudio":
+        elif self.hermes_provider in ("lmstudio", "deepseek", "nvidia", "openai_compatible"):
             cfg["model"] = f"openai/{self.hermes_model}"
         cfg["temperature"] = self.hermes_temperature
         cfg["max_tokens"] = self.hermes_max_tokens

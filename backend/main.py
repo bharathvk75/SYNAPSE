@@ -3,8 +3,15 @@ SYNAPSE — Multi-Agent Automated Code Reviewer & PR Bot
 Main FastAPI Application Entry Point
 """
 import asyncio
+import io
+import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+
+# Force UTF-8 encoding for stdout and stderr on Windows to prevent UnicodeEncodeError
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 import structlog
 import uvicorn
@@ -25,8 +32,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Application lifespan — startup and graceful shutdown."""
     logger.info(
         "🚀 SYNAPSE booting up",
-        version="1.0.0",
-        agents=["Hermes", "CodeAnalyzer", "SecurityScanner", "TestGenerator", "FixSuggester", "PRManager"],
+        version="2.12",
+        agents=["Hermes", "CodeAnalyzer", "SecurityScanner", "ImpactAnalyzer", "TestGenerator", "FixSuggester", "PRManager"],
     )
 
     # Init database
@@ -55,7 +62,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 app = FastAPI(
     title="SYNAPSE",
     description="Multi-Agent Automated Code Reviewer & PR Bot — powered by LangGraph + LiteLLM + Hermes",
-    version="1.0.0",
+    version="2.12",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -88,8 +95,8 @@ async def health():
     return {
         "status": "healthy",
         "service": "SYNAPSE",
-        "version": "1.0.0",
-        "agents": ["Hermes", "CodeAnalyzer", "SecurityScanner", "TestGenerator", "FixSuggester", "PRManager"],
+        "version": "2.12",
+        "agents": ["Hermes", "CodeAnalyzer", "SecurityScanner", "ImpactAnalyzer", "TestGenerator", "FixSuggester", "PRManager"],
     }
 
 

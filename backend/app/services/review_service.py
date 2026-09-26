@@ -122,23 +122,39 @@ class ReviewService:
         try:
             await self._update_db_status(session_id, ReviewStatus.RUNNING)
 
-            final_state = await self.workflow.ainvoke(state)
-            _active_sessions[session_id] = final_state
+            updates = await self.workflow.ainvoke(state)
+            for k, v in updates.items():
+                if hasattr(state, k):
+                    setattr(state, k, v)
+            _active_sessions[session_id] = state
 
             # Determine final status
-            final_status = final_state.status
+            final_status = state.status
             if final_status in (ReviewStatus.RUNNING, ReviewStatus.PENDING):
                 final_status = ReviewStatus.COMPLETED
 
-            await self._persist_results(session_id, final_state, final_status)
+            await self._persist_results(session_id, state, final_status)
 
             # Broadcast review complete
-            response = self._state_to_response(final_state)
+            response = self._state_to_response(state)
             await self._broadcast(
                 session_id,
                 "review_complete",
                 response.model_dump(mode="json"),
             )
+
+            # Trigger notifications
+            try:
+                from app.services.notification_service import notifier
+                await notifier.notify_review_status(
+                    session_id=session_id,
+                    title=state.request.title,
+                    status=final_status.value,
+                    summary=state.summary,
+                    narrative=state.hermes_narrative,
+                )
+            except Exception as n_exc:
+                self.logger.warning("Notification dispatch failed", error=str(n_exc))
 
         except Exception as exc:
             self.logger.error("Workflow execution failed", session_id=session_id, error=str(exc))
@@ -161,6 +177,7 @@ class ReviewService:
             "vulnerabilities": [v.model_dump() for v in state.vulnerabilities],
             "test_suggestions": [t.model_dump() for t in state.test_suggestions],
             "fix_suggestions": [f.model_dump() for f in state.fix_suggestions],
+            "impact_assessment": state.impact_assessment.model_dump() if state.impact_assessment else None,
             "hermes_narrative": state.hermes_narrative,
             "hermes_approval_message": state.hermes_approval_message,
             "agent_states": {k: v.model_dump() for k, v in state.agent_states.items()},
@@ -217,6 +234,19 @@ class ReviewService:
 
         state.status = new_status
         await self._update_db_status(session_id, new_status)
+
+        # Trigger notifications
+        try:
+            from app.services.notification_service import notifier
+            await notifier.notify_review_status(
+                session_id=session_id,
+                title=state.request.title,
+                status=new_status.value,
+                summary=state.summary,
+                narrative=state.hermes_narrative,
+            )
+        except Exception as n_exc:
+            self.logger.warning("Notification dispatch failed", error=str(n_exc))
 
         await self._broadcast(session_id, "approval_received", {
             "decision": decision,
@@ -305,6 +335,7 @@ class ReviewService:
             vulnerabilities=state.vulnerabilities,
             test_suggestions=state.test_suggestions,
             fix_suggestions=state.fix_suggestions,
+            impact_assessment=state.impact_assessment,
             hermes_narrative=state.hermes_narrative,
             hermes_approval_message=state.hermes_approval_message,
             requires_approval=state.awaiting_approval,
@@ -339,12 +370,19 @@ class ReviewService:
                     pass
             return result
 
-        from app.schemas import CodeIssue, FixSuggestion, SecurityVulnerability, TestSuggestion
+        from app.schemas import CodeIssue, FixSuggestion, ImpactAssessment, SecurityVulnerability, TestSuggestion
 
         agent_states = {}
         for k, v in data.get("agent_states", {}).items():
             try:
                 agent_states[k] = AgentState(**v)
+            except Exception:
+                pass
+
+        impact = None
+        if "impact_assessment" in data and data["impact_assessment"]:
+            try:
+                impact = ImpactAssessment(**data["impact_assessment"])
             except Exception:
                 pass
 
@@ -360,6 +398,7 @@ class ReviewService:
             vulnerabilities=_parse_list("vulnerabilities", SecurityVulnerability),
             test_suggestions=_parse_list("test_suggestions", TestSuggestion),
             fix_suggestions=_parse_list("fix_suggestions", FixSuggestion),
+            impact_assessment=impact,
             hermes_narrative=data.get("hermes_narrative"),
             hermes_approval_message=data.get("hermes_approval_message"),
             requires_approval=record.requires_approval,

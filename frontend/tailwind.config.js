@@ -8,19 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // SYNAPSE dark palette
+        // SYNAPSE database/Hermes orange palette
         synapse: {
-          50:  '#f0f4ff',
-          100: '#e0e9ff',
-          200: '#c2d1ff',
-          300: '#94aeff',
-          400: '#6c8bff',
-          500: '#4f6ef7',   // primary
-          600: '#3d52e0',
-          700: '#3040c4',
-          800: '#2b36a0',
-          900: '#27337e',
-          950: '#1b2050',
+          50:  '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',   // primary: Hermes Orange
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
         },
         hermes: {
           50:  '#fff7ed',
@@ -29,18 +29,18 @@ export default {
           300: '#fdba74',
           400: '#fb923c',
           500: '#f97316',   // Hermes orange
-          600: '#ea6e0d',
-          700: '#c2570a',
-          800: '#9a4510',
-          900: '#7c3a10',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
         },
         dark: {
-          bg:      '#0c0e1a',
-          surface: '#111325',
-          card:    '#161830',
-          border:  '#1e2240',
-          hover:   '#1c2045',
-          muted:   '#2a2f52',
+          bg:      '#050508',  // Deep database black
+          surface: '#0a0a0f',  // Dark charcoal panel
+          card:    '#0f0f16',  // Sharp card
+          border:  '#1c1c28',  // Tech border
+          hover:   '#181824',  // Hover state
+          muted:   '#28283a',  // Muted tech element
         },
       },
       fontFamily: {
@@ -48,17 +48,17 @@ export default {
         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
       },
       backgroundImage: {
-        'synapse-gradient': 'linear-gradient(135deg, #0c0e1a 0%, #111325 50%, #161830 100%)',
-        'hero-glow': 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,110,247,0.15) 0%, transparent 70%)',
-        'card-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(79,110,247,0.08) 0%, transparent 70%)',
-        'hermes-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 70%)',
+        'synapse-gradient': 'linear-gradient(135deg, #050508 0%, #0a0a0f 50%, #0f0f16 100%)',
+        'hero-glow': 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(249,115,22,0.15) 0%, transparent 75%)',
+        'card-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(249,115,22,0.08) 0%, transparent 70%)',
+        'hermes-glow': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(249,115,22,0.15) 0%, transparent 70%)',
       },
       boxShadow: {
-        'synapse': '0 0 40px rgba(79,110,247,0.15)',
-        'card': '0 4px 24px rgba(0,0,0,0.4)',
-        'glow-sm': '0 0 12px rgba(79,110,247,0.3)',
-        'glow-md': '0 0 24px rgba(79,110,247,0.4)',
-        'hermes': '0 0 24px rgba(249,115,22,0.3)',
+        'synapse': '0 0 40px rgba(249,115,22,0.08)',
+        'card': '0 4px 20px rgba(0,0,0,0.6)',
+        'glow-sm': '0 0 10px rgba(249,115,22,0.25)',
+        'glow-md': '0 0 20px rgba(249,115,22,0.35)',
+        'hermes': '0 0 20px rgba(249,115,22,0.35)',
       },
       animation: {
         'pulse-slow': 'pulse 3s ease-in-out infinite',
@@ -72,14 +72,14 @@ export default {
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-8px)' },
+          '50%': { transform: 'translateY(-6px)' },
         },
         glow: {
-          from: { boxShadow: '0 0 12px rgba(79,110,247,0.3)' },
-          to:   { boxShadow: '0 0 24px rgba(79,110,247,0.6)' },
+          from: { boxShadow: '0 0 10px rgba(249,115,22,0.2)' },
+          to:   { boxShadow: '0 0 20px rgba(249,115,22,0.4)' },
         },
         slideIn: {
-          from: { opacity: '0', transform: 'translateY(-8px)' },
+          from: { opacity: '0', transform: 'translateY(-6px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
         },
         fadeIn: {
@@ -91,9 +91,18 @@ export default {
           '100%': { backgroundPosition: '0 100%' },
         },
       },
+      // SHARP CORNERS: Redefine border radius to be very small and sharp
       borderRadius: {
-        'xl2': '1rem',
-        'xl3': '1.5rem',
+        'none': '0px',
+        'sm': '1px',
+        'DEFAULT': '2px',
+        'md': '2px',
+        'lg': '3px',
+        'xl': '4px',
+        '2xl': '4px',
+        '3xl': '6px',
+        'xl2': '4px',
+        'xl3': '6px',
       },
     },
   },

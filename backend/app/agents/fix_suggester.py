@@ -154,22 +154,41 @@ class FixSuggesterAgent(BaseAgent):
             raw = parsed.get("fixes", [])
 
             fixes = []
+            from app.services.patch_verifier import patch_verifier
+
             for r in raw:
                 try:
+                    orig_code = r.get("original_code", "")
+                    fixed_code = r.get("fixed_code", "")
+                    diff_str = r.get("diff", self._generate_simple_diff(
+                        orig_code,
+                        fixed_code,
+                        file_ctx.path,
+                    ))
+
+                    # Automated Sandbox & AST Verification
+                    v_res = patch_verifier.verify_fix(
+                        original_code=orig_code,
+                        fixed_code=fixed_code,
+                        file_path=file_ctx.path,
+                        diff=diff_str,
+                        language=file_ctx.language,
+                    )
+                    conf = max(0.1, min(1.0, float(r.get("confidence", 0.85)) + v_res["confidence_modifier"]))
+
                     fix = FixSuggestion(
                         id=str(uuid.uuid4())[:8],
                         issue_ids=r.get("issue_ids", issue_ids[:2]),
                         file_path=r.get("file_path", file_ctx.path),
-                        original_code=r.get("original_code", ""),
-                        fixed_code=r.get("fixed_code", ""),
-                        diff=r.get("diff", self._generate_simple_diff(
-                            r.get("original_code", ""),
-                            r.get("fixed_code", ""),
-                            file_ctx.path,
-                        )),
+                        original_code=orig_code,
+                        fixed_code=fixed_code,
+                        diff=diff_str,
                         explanation=r.get("explanation", ""),
-                        confidence=float(r.get("confidence", 0.8)),
-                        auto_applicable=bool(r.get("auto_applicable", False)),
+                        confidence=conf,
+                        auto_applicable=bool(r.get("auto_applicable", False) and v_res["ast_valid"]),
+                        ast_valid=v_res["ast_valid"],
+                        verification_status=v_res["verification_status"],
+                        verification_notes=v_res["verification_notes"],
                     )
                     fixes.append(fix)
                 except Exception:

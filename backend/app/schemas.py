@@ -58,6 +58,9 @@ class LLMProvider(str, Enum):
     COHERE = "cohere"
     AZURE = "azure"
     DEEPSEEK = "deepseek"
+    NVIDIA = "nvidia"
+    OPENAI_COMPATIBLE = "openai_compatible"
+    MOCK = "mock"
 
 
 # ── Core Issue Models ──────────────────────────────────────────────────────────
@@ -75,6 +78,7 @@ class CodeIssue(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0, default=0.8)
     rule_id: Optional[str] = None
     references: List[str] = []
+    reasoning: Optional[str] = None
 
 
 class SecurityVulnerability(BaseModel):
@@ -91,6 +95,8 @@ class SecurityVulnerability(BaseModel):
     code_snippet: Optional[str] = None
     exploit_likelihood: float = Field(ge=0.0, le=1.0, default=0.5)
     cvss_score: Optional[float] = None
+    reasoning: Optional[str] = None
+    exploit_scenario: Optional[str] = None
 
 
 class TestSuggestion(BaseModel):
@@ -114,6 +120,20 @@ class FixSuggestion(BaseModel):
     explanation: str
     confidence: float = Field(ge=0.0, le=1.0, default=0.8)
     auto_applicable: bool = False
+    ast_valid: bool = True
+    verification_status: str = "verified_clean"  # verified_clean | syntax_valid | warning
+    verification_notes: Optional[str] = None
+
+
+class ImpactAssessment(BaseModel):
+    blast_radius_score: int = Field(ge=0, le=100, default=25)
+    risk_level: str = "low"  # low | medium | high | critical
+    breaking_change_risk: bool = False
+    api_contracts_affected: List[str] = []
+    database_impact: str = "No database schema migrations or unindexed queries detected."
+    performance_impact: str = "Low execution overhead."
+    dependency_risk: str = "No vulnerable or deprecated external dependencies detected."
+    architectural_recommendations: List[str] = []
 
 
 # ── Agent State Models ─────────────────────────────────────────────────────────
@@ -126,6 +146,9 @@ class AgentState(BaseModel):
     error: Optional[str] = None
     progress: float = Field(ge=0.0, le=1.0, default=0.0)
     current_task: Optional[str] = None
+    reasoning_trace: List[str] = Field(default_factory=list)
+    thought_process: Optional[str] = None
+    confidence_score: Optional[float] = None
 
 
 # ── Review Request / Response ──────────────────────────────────────────────────
@@ -172,6 +195,7 @@ class ReviewSummary(BaseModel):
     files_analyzed: int = 0
     lines_analyzed: int = 0
     ai_confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+    blast_radius_score: Optional[int] = 25
 
 
 class ReviewResponse(BaseModel):
@@ -187,6 +211,7 @@ class ReviewResponse(BaseModel):
     vulnerabilities: List[SecurityVulnerability] = []
     test_suggestions: List[TestSuggestion] = []
     fix_suggestions: List[FixSuggestion] = []
+    impact_assessment: Optional[ImpactAssessment] = None
 
     hermes_narrative: Optional[str] = None
     hermes_approval_message: Optional[str] = None
@@ -206,6 +231,9 @@ class WSMessageType(str, Enum):
     AGENT_COMPLETE = "agent_complete"
     AGENT_ERROR = "agent_error"
     STREAM_TOKEN = "stream_token"
+    STREAM_THOUGHT = "stream_thought"
+    FIX_VERIFIED = "fix_verified"
+    IMPACT_EVALUATED = "impact_evaluated"
     REVIEW_COMPLETE = "review_complete"
     APPROVAL_REQUIRED = "approval_required"
     APPROVAL_RECEIVED = "approval_received"
@@ -245,6 +273,7 @@ class SettingsResponse(BaseModel):
     github_connected: bool = False
     github_user: Optional[str] = None
     review_settings: Dict[str, Any] = {}
+    notification_settings: Dict[str, Any] = {}
 
 
 class SettingsUpdateRequest(BaseModel):
@@ -254,7 +283,9 @@ class SettingsUpdateRequest(BaseModel):
     hermes_model: Optional[str] = None
     github_token: Optional[str] = None
     review_settings: Optional[Dict[str, Any]] = None
+    notification_settings: Optional[Dict[str, Any]] = None
     api_keys: Optional[Dict[str, str]] = None
+    base_urls: Optional[Dict[str, str]] = None
 
 
 # ── GitHub Models ──────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ type MessageHandler = (message: WSMessage) => void
 
 export class SynapseWebSocket {
   private ws: WebSocket | null = null
-  private sessionId: string
+  protected sessionId: string
   private handlers: Map<WSMessageType | '*', Set<MessageHandler>> = new Map()
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0

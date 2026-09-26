@@ -1,10 +1,5 @@
 [tool.poetry]
-name = "synapse"
-version = "1.0.0"
-description = "SYNAPSE - Multi-Agent Automated Code Reviewer & PR Bot"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"

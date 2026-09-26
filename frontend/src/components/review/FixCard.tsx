@@ -35,13 +35,22 @@ export default function FixCard({ fix }: { fix: FixSuggestion }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            {fix.ast_valid !== false ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                <CheckCheck className="w-3 h-3" /> AST-Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/25">
+                <AlertTriangle className="w-3 h-3" /> Syntax Warning
+              </span>
+            )}
             {fix.auto_applicable ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/15 text-green-400 border border-green-500/25">
                 <Zap className="w-3 h-3" /> Auto-applicable
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-500/15 text-yellow-400 border border-yellow-500/25">
-                <AlertTriangle className="w-3 h-3" /> Manual Review Required
+                <AlertTriangle className="w-3 h-3" /> Manual Review
               </span>
             )}
             <span className={cn('text-xs font-medium', confColor)}>
@@ -49,9 +58,14 @@ export default function FixCard({ fix }: { fix: FixSuggestion }) {
             </span>
           </div>
           <p className="text-sm font-semibold text-white font-mono">{fix.file_path}</p>
-          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{fix.explanation}</p>
+          <p className="text-xs text-gray-400 mt-1 line-clamp-2">{fix.explanation}</p>
+          {fix.verification_notes && (
+            <p className="text-[11px] text-gray-500 mt-1 font-mono italic">
+              Verification: {fix.verification_notes}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-xs text-gray-600">Fixes {fix.issue_ids.length} issue{fix.issue_ids.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-gray-500">Fixes {fix.issue_ids.length} issue{fix.issue_ids.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
         <div className="flex-shrink-0 text-gray-600 mt-0.5">

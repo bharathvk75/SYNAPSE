@@ -44,6 +44,15 @@ async def get_settings():
             "enable_test_generation": settings.enable_test_generation,
             "enable_fix_suggestions": settings.enable_fix_suggestions,
         },
+        notification_settings={
+            "telegram_bot_token": settings.telegram_bot_token,
+            "telegram_chat_id": settings.telegram_chat_id,
+            "whatsapp_phone_number_id": settings.whatsapp_phone_number_id,
+            "whatsapp_access_token": settings.whatsapp_access_token,
+            "whatsapp_recipient_number": settings.whatsapp_recipient_number,
+            "enable_telegram_notifications": settings.enable_telegram_notifications,
+            "enable_whatsapp_notifications": settings.enable_whatsapp_notifications,
+        },
     )
 
 
@@ -64,9 +73,18 @@ async def update_settings(body: SettingsUpdateRequest):
         for key, value in body.review_settings.items():
             if hasattr(settings, key):
                 setattr(settings, key, value)
+    if body.notification_settings:
+        for key, value in body.notification_settings.items():
+            if hasattr(settings, key):
+                setattr(settings, key, value)
     if body.api_keys:
         for key, value in body.api_keys.items():
             attr = f"{key}_api_key"
+            if hasattr(settings, attr):
+                setattr(settings, attr, value)
+    if body.base_urls:
+        for key, value in body.base_urls.items():
+            attr = f"{key}_base_url"
             if hasattr(settings, attr):
                 setattr(settings, attr, value)
 
@@ -170,6 +188,34 @@ def _build_provider_list():
             description="DeepSeek's code-specialized models. Excellent for code tasks.",
         ),
         LLMProviderConfig(
+            provider=LLMProvider.NVIDIA,
+            model=settings.nvidia_model,
+            api_key="***" if settings.nvidia_api_key else None,
+            base_url=settings.nvidia_base_url,
+            is_active=settings.llm_provider == "nvidia",
+            is_local=False,
+            display_name="Nvidia NIM",
+            description="NVIDIA Inference Microservice. High-performance GPU-accelerated cloud LLMs.",
+        ),
+        LLMProviderConfig(
+            provider=LLMProvider.OPENAI_COMPATIBLE,
+            model=settings.openai_compatible_model,
+            api_key="***" if settings.openai_compatible_api_key else None,
+            base_url=settings.openai_compatible_base_url,
+            is_active=settings.llm_provider == "openai_compatible",
+            is_local=False,
+            display_name="OpenAI Compatible Cloud",
+            description="Any custom OpenAI-compatible cloud provider (e.g. OpenRouter, Together AI).",
+        ),
+        LLMProviderConfig(
+            provider=LLMProvider.MOCK,
+            model="mock",
+            is_active=settings.llm_provider == "mock",
+            is_local=True,
+            display_name="Mock Mode (No API Key)",
+            description="Test the entire multi-agent workflow and UI using high-quality simulated reviews. Fast and free.",
+        ),
+        LLMProviderConfig(
             provider=LLMProvider.AZURE,
             model=settings.azure_openai_deployment,
             api_key="***" if settings.azure_openai_api_key else None,
@@ -180,3 +226,48 @@ def _build_provider_list():
             description="Enterprise Azure-hosted OpenAI models.",
         ),
     ]
+
+
+@router.post("/test-notification")
+async def test_notification(request: Request):
+    """Dispatch a test notification to verify Telegram/WhatsApp credentials."""
+    body = await request.json()
+    channel = body.get("channel", "all")
+
+    from app.services.notification_service import notifier
+    from app.schemas import ReviewSummary
+
+    tg_ok = False
+    wa_ok = False
+    errors = []
+
+    if channel in ("telegram", "all"):
+        try:
+            tg_ok = await notifier.send_telegram_message(
+                "🧪 *SYNAPSE v2.12 Test Alert*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "✅ Telegram notification integration is working properly!\n"
+                "— Hermes, SYNAPSE Orchestrator"
+            )
+            if not tg_ok:
+                errors.append("Telegram credentials not configured or rejected by Telegram API.")
+        except Exception as e:
+            errors.append(f"Telegram error: {str(e)}")
+
+    if channel in ("whatsapp", "all"):
+        try:
+            wa_ok = await notifier.send_whatsapp_message(
+                "🧪 *SYNAPSE v2.12 Test Alert*\n"
+                "WhatsApp notification integration is working properly!\n"
+                "— Hermes, SYNAPSE Orchestrator"
+            )
+            if not wa_ok:
+                errors.append("WhatsApp credentials not configured or rejected by Meta Graph API.")
+        except Exception as e:
+            errors.append(f"WhatsApp error: {str(e)}")
+
+    return {
+        "status": "success" if (tg_ok or wa_ok or not errors) else "error",
+        "telegram_success": tg_ok,
+        "whatsapp_success": wa_ok,
+        "errors": errors,
+    }

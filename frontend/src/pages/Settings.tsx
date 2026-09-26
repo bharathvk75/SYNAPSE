@@ -1,11 +1,10 @@
-// SYNAPSE — Settings Page
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   Settings, Zap, CheckCircle2, AlertCircle, Eye, EyeOff,
-  Loader2, Save, Activity, Github, Bot, Shield, TestTube,
+  Loader2, Save, Activity, Github, Bot, Shield, TestTube, Bell, MessageSquare,
 } from 'lucide-react'
 import { settingsApi, githubApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -16,26 +15,41 @@ export default function SettingsPage() {
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
   const [githubToken, setGithubToken] = useState('')
   const [reviewSettings, setReviewSettings] = useState<Record<string, boolean | number>>({})
+  const [notificationSettings, setNotificationSettings] = useState<Record<string, string | boolean>>({})
   const [activeProvider, setActiveProvider] = useState<string | null>(null)
   const [activeModel, setActiveModel] = useState('')
   const [hermesProvider, setHermesProvider] = useState<string | null>(null)
   const [hermesModel, setHermesModel] = useState('')
   const [testingProvider, setTestingProvider] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<Record<string, { status: string; latency_ms?: number; error?: string }>>({})
+  const [baseUrls, setBaseUrls] = useState<Record<string, string>>({})
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: settingsApi.get,
-    onSuccess: (data) => {
-      if (!activeProvider) setActiveProvider(data.active_provider)
-      if (!activeModel) setActiveModel(data.active_model)
-      if (!hermesProvider) setHermesProvider(data.hermes_provider)
-      if (!hermesModel) setHermesModel(data.hermes_model)
-      if (Object.keys(reviewSettings).length === 0) {
-        setReviewSettings(data.review_settings as Record<string, boolean | number>)
-      }
-    },
   })
+
+  useEffect(() => {
+    if (settings) {
+      if (!activeProvider) setActiveProvider(settings.active_provider)
+      if (!activeModel) setActiveModel(settings.active_model)
+      if (!hermesProvider) setHermesProvider(settings.hermes_provider)
+      if (!hermesModel) setHermesModel(settings.hermes_model)
+      if (Object.keys(reviewSettings).length === 0) {
+        setReviewSettings(settings.review_settings as Record<string, boolean | number>)
+      }
+      if (Object.keys(notificationSettings).length === 0 && settings.notification_settings) {
+        setNotificationSettings(settings.notification_settings as Record<string, string | boolean>)
+      }
+      const urls: Record<string, string> = {}
+      settings.providers.forEach((p) => {
+        if (p.base_url) {
+          urls[p.provider] = p.base_url
+        }
+      })
+      setBaseUrls(urls)
+    }
+  }, [settings])
 
   const updateMut = useMutation({
     mutationFn: (body: Record<string, unknown>) => settingsApi.update(body),
@@ -77,6 +91,7 @@ export default function SettingsPage() {
   function saveAll() {
     const body: Record<string, unknown> = {
       review_settings: reviewSettings,
+      notification_settings: notificationSettings,
     }
     if (activeProvider) body.llm_provider = activeProvider
     if (activeModel) body.llm_model = activeModel
@@ -84,6 +99,7 @@ export default function SettingsPage() {
     if (hermesModel) body.hermes_model = hermesModel
     if (githubToken) body.github_token = githubToken
     if (Object.keys(apiKeys).length > 0) body.api_keys = apiKeys
+    if (Object.keys(baseUrls).length > 0) body.base_urls = baseUrls
     updateMut.mutate(body)
   }
 
@@ -198,6 +214,15 @@ export default function SettingsPage() {
                         onChange={(e) => setActiveModel(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                       />
+                      {(p.provider === 'openai_compatible' || p.provider === 'nvidia' || p.provider === 'deepseek') && (
+                        <input
+                          className="synapse-input text-sm font-mono"
+                          placeholder="Base URL (e.g. https://api.openai.com/v1)"
+                          value={baseUrls[p.provider] ?? ''}
+                          onChange={(e) => setBaseUrls((u) => ({ ...u, [p.provider]: e.target.value }))}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -320,6 +345,108 @@ export default function SettingsPage() {
             >
               {showKeys['github'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
+          </div>
+        </div>
+
+        {/* Notification Channels */}
+        <div className="glass-card p-6">
+          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <Bell className="w-4 h-4 text-hermes-500" />
+            Notification Channels (Telegram & WhatsApp)
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Receive review results and approval notifications instantly on Telegram or WhatsApp.
+          </p>
+
+          <div className="space-y-6">
+            {/* Telegram Channel */}
+            <div className="p-4 rounded-xl bg-dark-bg border border-dark-border space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm font-medium text-white cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-synapse-500"
+                    checked={!!notificationSettings.enable_telegram_notifications}
+                    onChange={(e) => setNotificationSettings((s) => ({ ...s, enable_telegram_notifications: e.target.checked }))}
+                  />
+                  📬 Enable Telegram Notifications
+                </label>
+              </div>
+              
+              {notificationSettings.enable_telegram_notifications && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5 font-medium">Telegram Bot Token</label>
+                    <input
+                      type="password"
+                      className="synapse-input text-xs font-mono"
+                      placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                      value={(notificationSettings.telegram_bot_token as string) || ''}
+                      onChange={(e) => setNotificationSettings((s) => ({ ...s, telegram_bot_token: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5 font-medium">Telegram Chat ID</label>
+                    <input
+                      className="synapse-input text-xs font-mono"
+                      placeholder="-100xxxxxxxxx or @channelname"
+                      value={(notificationSettings.telegram_chat_id as string) || ''}
+                      onChange={(e) => setNotificationSettings((s) => ({ ...s, telegram_chat_id: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* WhatsApp Channel */}
+            <div className="p-4 rounded-xl bg-dark-bg border border-dark-border space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm font-medium text-white cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-synapse-500"
+                    checked={!!notificationSettings.enable_whatsapp_notifications}
+                    onChange={(e) => setNotificationSettings((s) => ({ ...s, enable_whatsapp_notifications: e.target.checked }))}
+                  />
+                  💬 Enable WhatsApp Notifications
+                </label>
+              </div>
+
+              {notificationSettings.enable_whatsapp_notifications && (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5 font-medium">WhatsApp Phone Number ID</label>
+                      <input
+                        className="synapse-input text-xs font-mono"
+                        placeholder="e.g., 10928374656574"
+                        value={(notificationSettings.whatsapp_phone_number_id as string) || ''}
+                        onChange={(e) => setNotificationSettings((s) => ({ ...s, whatsapp_phone_number_id: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1.5 font-medium">Recipient Phone Number</label>
+                      <input
+                        className="synapse-input text-xs font-mono"
+                        placeholder="e.g., +447123456789 (with country code)"
+                        value={(notificationSettings.whatsapp_recipient_number as string) || ''}
+                        onChange={(e) => setNotificationSettings((s) => ({ ...s, whatsapp_recipient_number: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5 font-medium">Meta Access Token (System User Permanent Token)</label>
+                    <input
+                      type="password"
+                      className="synapse-input text-xs font-mono"
+                      placeholder="EAACw..."
+                      value={(notificationSettings.whatsapp_access_token as string) || ''}
+                      onChange={(e) => setNotificationSettings((s) => ({ ...s, whatsapp_access_token: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

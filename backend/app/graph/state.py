@@ -16,6 +16,7 @@ from app.schemas import (
     AgentStatus,
     CodeIssue,
     FixSuggestion,
+    ImpactAssessment,
     ReviewRequest,
     ReviewStatus,
     ReviewSummary,
@@ -67,6 +68,7 @@ class SynapseState(BaseModel):
     vulnerabilities: List[SecurityVulnerability] = Field(default_factory=list)
     test_suggestions: List[TestSuggestion] = Field(default_factory=list)
     fix_suggestions: List[FixSuggestion] = Field(default_factory=list)
+    impact_assessment: Optional[ImpactAssessment] = None
 
     # ── Hermes outputs ─────────────────────────────────────────────────────────
     hermes_narrative: Optional[str] = None

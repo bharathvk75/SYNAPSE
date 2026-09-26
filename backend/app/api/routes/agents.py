@@ -74,6 +74,27 @@ AGENT_REGISTRY = [
         "runs_at": ["after_code_analyzer"],
     },
     {
+        "name": "impact_analyzer",
+        "display_name": "ImpactAnalyzer",
+        "emoji": "💥",
+        "role": "Architectural Blast Radius Evaluator",
+        "description": (
+            "ImpactAnalyzer assesses the system-level ramifications of code changes. "
+            "It computes a composite Blast Radius score (0-100), detects breaking API "
+            "contract signatures, audits database query complexities and locks, and flags "
+            "downstream dependency risks."
+        ),
+        "capabilities": [
+            "Architectural Blast Radius calculation (0-100 composite index)",
+            "Breaking API contract detection (REST routes, RPC, exported interfaces)",
+            "Database query & lock impact analysis (N+1, unindexed filters)",
+            "Asynchronous blocking I/O and performance footprint evaluation",
+            "Dependency & third-party package risk assessment",
+            "Actionable architectural recommendations",
+        ],
+        "runs_at": ["after_security_scanner"],
+    },
+    {
         "name": "test_generator",
         "display_name": "TestGenerator",
         "emoji": "🧪",

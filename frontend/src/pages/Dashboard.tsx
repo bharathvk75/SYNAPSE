@@ -36,14 +36,14 @@ export default function DashboardPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-8">
       {/* ── Hero ── */}
       <motion.div variants={container} initial="hidden" animate="show">
-        <motion.div variants={item} className="relative overflow-hidden rounded-2xl border border-dark-border p-8"
-          style={{ background: 'linear-gradient(135deg, #111325 0%, #161830 100%)' }}>
+        <motion.div variants={item} className="relative overflow-hidden rounded-lg border border-dark-border p-8"
+          style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0f16 100%)' }}>
           <div className="absolute inset-0 bg-hero-glow pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                     style={{ background: 'linear-gradient(135deg, #4f6ef7, #818cf8)' }}>
+                     style={{ background: 'linear-gradient(135deg, #f97316, #f59e0b)' }}>
                   <Zap className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-synapse-400 text-sm font-semibold tracking-wide uppercase">SYNAPSE</span>

@@ -32,7 +32,6 @@
     "@radix-ui/react-select": "^2.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-progress": "^1.1.0",
-    "@radix-ui/react-badge": "^1.0.0",
     "react-textarea-autosize": "^8.5.3",
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",

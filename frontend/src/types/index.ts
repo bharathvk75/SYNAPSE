@@ -4,7 +4,7 @@ export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info'
 export type IssueCategory = 'security' | 'performance' | 'maintainability' | 'bug' | 'style' | 'testing' | 'documentation' | 'best_practice'
 export type ReviewStatus = 'pending' | 'running' | 'awaiting_approval' | 'approved' | 'rejected' | 'completed' | 'failed'
 export type AgentStatus = 'idle' | 'running' | 'completed' | 'failed' | 'waiting'
-export type LLMProvider = 'ollama' | 'lmstudio' | 'openai' | 'anthropic' | 'gemini' | 'groq' | 'cohere' | 'azure' | 'deepseek'
+export type LLMProvider = 'ollama' | 'lmstudio' | 'openai' | 'anthropic' | 'gemini' | 'groq' | 'cohere' | 'azure' | 'deepseek' | 'nvidia' | 'openai_compatible' | 'mock'
 
 export interface CodeIssue {
   id: string
@@ -59,6 +59,20 @@ export interface FixSuggestion {
   explanation: string
   confidence: number
   auto_applicable: boolean
+  ast_valid?: boolean
+  verification_status?: 'verified_clean' | 'syntax_valid' | 'warning'
+  verification_notes?: string
+}
+
+export interface ImpactAssessment {
+  blast_radius_score: number
+  risk_level: 'low' | 'medium' | 'high' | 'critical'
+  breaking_change_risk: boolean
+  api_contracts_affected: string[]
+  database_impact: string
+  performance_impact: string
+  dependency_risk: string
+  architectural_recommendations: string[]
 }
 
 export interface AgentState {
@@ -70,6 +84,9 @@ export interface AgentState {
   error?: string
   progress: number
   current_task?: string
+  reasoning_trace?: string[]
+  thought_process?: string
+  confidence_score?: number
 }
 
 export interface ReviewSummary {
@@ -86,6 +103,7 @@ export interface ReviewSummary {
   files_analyzed: number
   lines_analyzed: number
   ai_confidence: number
+  blast_radius_score?: number
 }
 
 export interface ReviewResponse {
@@ -100,6 +118,7 @@ export interface ReviewResponse {
   vulnerabilities: SecurityVulnerability[]
   test_suggestions: TestSuggestion[]
   fix_suggestions: FixSuggestion[]
+  impact_assessment?: ImpactAssessment
   hermes_narrative?: string
   hermes_approval_message?: string
   requires_approval: boolean
@@ -149,6 +168,18 @@ export interface SettingsResponse {
   github_connected: boolean
   github_user?: string
   review_settings: Record<string, boolean | number | string>
+  notification_settings?: Record<string, boolean | string>
+}
+
+export interface SettingsUpdateRequest {
+  llm_provider?: string
+  llm_model?: string
+  hermes_provider?: string
+  hermes_model?: string
+  github_token?: string
+  review_settings?: Record<string, boolean | number | string>
+  api_keys?: Record<string, string>
+  base_urls?: Record<string, string>
 }
 
 export interface GitHubPRInfo {
@@ -195,6 +226,9 @@ export type WSMessageType =
   | 'agent_complete'
   | 'agent_error'
   | 'stream_token'
+  | 'stream_thought'
+  | 'fix_verified'
+  | 'impact_evaluated'
   | 'review_complete'
   | 'approval_required'
   | 'approval_received'
