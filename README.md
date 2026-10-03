@@ -19,6 +19,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?style=flat-square&logo=typescript)](https://typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38BDF8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![Version](https://img.shields.io/badge/version-2.12-6366f1?style=flat-square)](https://github.com/bharathvk75/SYNAPSE/releases/tag/v2.12)
 
 </div>
 
@@ -26,7 +27,7 @@
 
 ## 🧠 What is SYNAPSE?
 
-SYNAPSE is a production-grade, multi-agent AI code review platform that orchestrates 6 specialized AI agents through a LangGraph StateGraph to deliver comprehensive, automated code reviews with human-in-the-loop approval.
+SYNAPSE is a production-grade, multi-agent AI code review platform that orchestrates 7 specialized AI agents through a LangGraph StateGraph to deliver comprehensive, automated code reviews with human-in-the-loop approval.
 
 **Hermes** — the master orchestrator agent — coordinates all specialist agents, synthesises their findings into executive and technical narratives, and converses with you in natural language for approval before any changes are committed to GitHub.
 
@@ -67,13 +68,27 @@ SYNAPSE is built directly on the latest trends dominating the AI and software en
 | 🧠 **Hermes Orchestrator** | Conversational AI agent that manages the entire pipeline, talks to you, asks for approval |
 | 🔍 **Deep Code Analysis** | Python AST parsing, cyclomatic complexity, N+1 detection, type hint coverage |
 | 🛡️ **OWASP Security Scan** | Full OWASP Top 10 (2021), CVE patterns, CVSS scoring, exploit likelihood |
+| 💥 **Impact Analysis (v2.12)** | Architectural blast-radius assessment, breaking API changes, performance regression flags |
 | 🧪 **Test Generator** | Identifies gaps, generates ready-to-run pytest/Jest/JUnit tests |
-| 🔧 **Fix Suggester** | Diff-backed, auto-applicable fix suggestions for every issue |
+| 🔧 **AST Patch Verifier (v2.12)** | Diff-backed, auto-applicable fix suggestions validated against Python AST parser |
+| 📊 **SARIF & Markdown Export (v2.12)** | OASIS SARIF v2.1.0 report generation for GitHub Advanced Security & CI/CD |
+| 📲 **Mobile Alerts (v2.12)** | Instant notifications and approval triggers via Telegram & WhatsApp Cloud API |
 | 🐙 **GitHub PR Integration** | Inline comments, PR reviews, webhook automation |
-| ⚡ **Universal LLM** | Ollama · LM Studio · OpenAI · Anthropic · Gemini · Groq · Azure · DeepSeek |
-| 📡 **Real-time Streaming** | WebSocket-based live agent progress with token streaming |
+| ⚡ **Universal LLM** | Ollama · LM Studio · OpenAI · Anthropic · Gemini · Groq · Azure · DeepSeek · Nvidia NIM |
+| 📡 **Real-time Streaming** | WebSocket-based live agent progress with token streaming & Chain-of-Thought (CoT) traces |
 | 💅 **Stunning UI** | Dark glassmorphism UI with Framer Motion animations |
 | 🐳 **Docker Ready** | One `docker compose up` deployment |
+
+---
+
+## 🆕 What's New in Version 2.12
+
+- **💥 ImpactAnalyzer Agent**: Added 7th specialized agent that computes architectural blast radius, breaking API contract changes, security attack surface shifts, and latency regression risks.
+- **🛡️ AST-Level Patch Verification**: Every AI-generated fix suggestion is validated with Python's Abstract Syntax Tree (`ast.parse`) and delimiter integrity checks before being marked `verified`.
+- **📊 SARIF v2.1.0 & Markdown Export**: Direct export of findings to standard OASIS SARIF format for integration with GitHub Security tab, alongside 1-click Markdown PR summaries.
+- **📲 Telegram & WhatsApp Notifications**: Review summaries and approval alerts sent directly to Telegram channels and WhatsApp numbers via Meta Graph API.
+- **🧠 Chain-of-Thought (CoT) Visualizer**: Interactive reasoning timeline in `AgentPipeline` detailing each specialist agent's intermediate deductions.
+- **🔄 Resilient Fallback Engine**: Graceful degradation to simulated mock telemetry if external LLM providers throttle or lose network connectivity.
 
 ---
 
@@ -98,6 +113,8 @@ SYNAPSE is built directly on the latest trends dominating the AI and software en
 │  React Query                   │  │   ↓                        │ │   │
 │  Framer Motion                 │  │ security_scanner           │ │   │
 │  TailwindCSS                   │  │   ↓                        │ │   │
+│                                │  │ impact_analyzer            │ │   │
+│                                │  │   ↓                        │ │   │
 │                                │  │ test_generator             │ │   │
 │                                │  │   ↓                        │ │   │
 │                                │  │ fix_suggester              │ │   │
@@ -121,11 +138,12 @@ SYNAPSE is built directly on the latest trends dominating the AI and software en
 SYNAPSE uses **LangGraph's StateGraph** as the multi-agent backbone. This is what we call the *Ponytail* pattern: defining a complex agent pipeline in minimal code.
 
 ```python
-# The entire 6-agent pipeline is ~80 lines in workflow.py
+# The entire 7-agent pipeline is defined in workflow.py
 builder = StateGraph(SynapseState)
 builder.add_node("hermes_init",        _node_hermes_init)
 builder.add_node("code_analyzer",      _node_code_analyzer)
 builder.add_node("security_scanner",   _node_security_scanner)
+builder.add_node("impact_analyzer",    _node_impact_analyzer)
 builder.add_node("test_generator",     _node_test_generator)
 builder.add_node("fix_suggester",      _node_fix_suggester)
 builder.add_node("hermes_synthesize",  _node_hermes_synthesize)
@@ -143,8 +161,9 @@ graph = builder.compile()
 | **Hermes** | 🧠 | Master Orchestrator | Coordinates all agents, synthesises narrative, manages approval conversations |
 | **CodeAnalyzer** | 🔍 | Static Analysis Engine | Python AST, complexity, bugs, performance, maintainability |
 | **SecurityScanner** | 🛡️ | OWASP Security Auditor | OWASP Top 10, secrets detection, CVSS scoring, CVE lookup |
+| **ImpactAnalyzer** | 💥 | Architectural Impact & Blast Radius | Assesses breaking API changes, blast radius score, risk tier, regression hazards |
 | **TestGenerator** | 🧪 | Coverage Gap Analyst | Identifies untested paths, generates pytest/Jest/JUnit tests |
-| **FixSuggester** | 🔧 | Automated Refactoring | Diff-backed fix suggestions, auto-applicable flag |
+| **FixSuggester** | 🔧 | Automated Refactoring & AST Verifier | Diff-backed fix suggestions validated with syntax checker |
 | **PRManager** | 🐙 | GitHub PR Publisher | Posts reviews, inline comments, formal PR verdicts |
 
 ---
